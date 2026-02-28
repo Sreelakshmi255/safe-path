@@ -1,7 +1,7 @@
 🛡️ SafePath 🎯
 Basic Details
 
-Team Name: [CodeCrafters]
+Team Name: CodeCrafters
 
 Team Members
 
@@ -225,7 +225,7 @@ Request Body:
 🎥 Project Demo
 Video
 
-🔗 [Add YouTube / Drive Link Here]
+🔗 https://youtu.be/Cv6teedmaMk
 
 Video demonstrates:
 
@@ -277,14 +277,12 @@ Testing and debugging
 
 👥 Team Contributions
 
-[Member 1]:
-Frontend development, UI design, LocalStorage persistence
+Sreelakshmi TM:
+Frontend development, UI design, LocalStorage persistence,, documentation,Testing
 
-[Member 2]:
-Backend API development, emergency logic, WebSocket integration
+Malavika Sajith:
+Backend API development, emergency logic, WebSocket integration,deployment
 
-[Member 3]:
-Testing, documentation, deployment
 
 📜 License
 
