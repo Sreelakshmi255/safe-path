@@ -1,15 +1,15 @@
 🛡️ SafePath 🎯
 Basic Details
 
-Team Name: [Your Team Name]
+Team Name: [CodeCrafters]
 
 Team Members
 
-Member 1: [Name] – [College]
+Member 1: Srellakshmi T M -College of engineering Vadakara
 
-Member 2: [Name] – [College]
+Member 2: Malavika Sajith -College of Engineering ,Vadakara
 
-Member 3: [Name] – [College]
+
 
 🌐 Hosted Project Link
 
