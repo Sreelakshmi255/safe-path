@@ -36,7 +36,7 @@ export default function CheckInSystem({
       setTimeRemaining(checkInInterval * 60);
       setShowPrompt(false);
     }
-  }, [isActive, isPaused]);
+  }, [isActive, isPaused, checkInInterval]);
 
   // Countdown timer
   useEffect(() => {
@@ -114,7 +114,7 @@ export default function CheckInSystem({
           onClick={handleCheckIn}
           className="mt-3 w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
         >
-          <span>✓</span> I&apos;m Safe - Check In
+          <span>*</span> I&apos;m Safe - Check In
         </button>
       </div>
 
@@ -125,7 +125,7 @@ export default function CheckInSystem({
             <div className="text-center">
               {/* Warning Icon */}
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">⚠️</span>
+                <span className="text-3xl">!</span>
               </div>
               
               <h2 className="text-xl font-bold text-gray-800 mb-2">
@@ -140,14 +140,14 @@ export default function CheckInSystem({
                   onClick={handleCheckIn}
                   className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-xl transition-colors text-lg"
                 >
-                  ✓ I&apos;m Safe
+                  * I&apos;m Safe
                 </button>
                 
                 <button
                   onClick={handleEmergencyTrigger}
                   className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-xl transition-colors text-lg flex items-center justify-center gap-2"
                 >
-                  <span>🆘</span> Send Emergency Alert
+                  <span>!</span> Send Emergency Alert
                 </button>
               </div>
 

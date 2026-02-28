@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { Toaster, toast } from "react-hot-toast";
 import axios from "axios";
-import MapComponent from "@/components/MapComponent";
 import CheckInSystem from "@/components/CheckInSystem";
 import EmergencyListener from "@/components/EmergencyButton";
 
@@ -36,14 +35,19 @@ interface EmergencyContact {
 }
 
 export default function Dashboard() {
+  // Use lazy initialization for state that depends on browser APIs
   const [trip, setTrip] = useState<Trip | null>(null);
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
   const [contacts, setContacts] = useState<EmergencyContact[]>([]);
   const [newContact, setNewContact] = useState({ name: "", phone: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
+  
+  // Use lazy initialization to detect client-side (avoids hydration mismatch)
+  const [isMounted] = useState(() => typeof window !== 'undefined');
 
-  // Load saved trip on mount
+  // Load saved trip on mount (client-side only)
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     const savedTrip = localStorage.getItem("trip");
     if (savedTrip) {
@@ -131,24 +135,48 @@ export default function Dashboard() {
       return;
     }
 
-    toast.error("🚨 EMERGENCY ALERT SENT!");
+    const location = currentLocation 
+      ? `https://maps.google.com/?q=${currentLocation.lat},${currentLocation.lng}`
+      : "Location unavailable";
+
+    toast.error("EMERGENCY ALERT SENT!");
     
     // Send SMS to all contacts
+    let successCount = 0;
+    let failCount = 0;
+    
     for (const contact of contacts) {
       try {
         await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/emergency`, {
-          location: currentLocation 
-            ? `https://maps.google.com/?q=${currentLocation.lat},${currentLocation.lng}`
-            : "Location unavailable",
+          location,
           contactNumber: contact.phone,
+          userId: "user123",
         });
-      } catch (error) {
-        console.error("Failed to send emergency SMS:", error);
+        successCount++;
+      } catch (error: any) {
+        failCount++;
+        console.error(`Failed to send to ${contact.phone}:`, error.response?.data || error.message);
       }
+    }
+
+    // Show result feedback
+    if (failCount === 0) {
+      toast.success(`Alerts sent to ${successCount} contact(s)!`);
+    } else {
+      toast.error(`Sent: ${successCount}, Failed: ${failCount}`);
     }
 
     setShowEmergencyModal(true);
   }, [contacts, currentLocation]);
+
+  // Button text constants to avoid hydration mismatch
+  const buttonTexts = {
+    airport: isMounted ? "🏢 Go to Airport" : "Go to Airport",
+    home: isMounted ? "🏠 Go to Home" : "Go to Home",
+    work: isMounted ? "💼 Go to Work" : "Go to Work",
+    addContact: isMounted ? "+ Add Contact" : "+ Add Contact",
+    emergency: isMounted ? "🚨 SEND EMERGENCY ALERT" : "SEND EMERGENCY ALERT",
+  };
 
   // Handle route drift
   const handleDrift = () => {
@@ -172,7 +200,7 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center">
-              <span className="text-white text-xl">🛡️</span>
+              <span className="text-white text-xl">S</span>
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-800">SafePath</h1>
@@ -195,7 +223,7 @@ export default function Dashboard() {
           <div className="space-y-6">
             {/* Trip Controls */}
             <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-              <h2 className="text-lg font-bold text-gray-800 mb-4">🚖 Trip Control</h2>
+            <h2 className="text-lg font-bold text-gray-800 mb-4">Trip Control</h2>
               
               {!trip ? (
                 <div className="space-y-3">
@@ -205,21 +233,21 @@ export default function Dashboard() {
                     disabled={isLoading}
                     className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white font-semibold py-3 px-4 rounded-xl transition-colors"
                   >
-                    {isLoading ? "Starting..." : "🏢 Go to Airport"}
+                    {isLoading ? "Starting..." : buttonTexts.airport}
                   </button>
                   <button
                     onClick={() => startTrip("Home")}
                     disabled={isLoading}
                     className="w-full bg-purple-500 hover:bg-purple-600 disabled:bg-gray-300 text-white font-semibold py-3 px-4 rounded-xl transition-colors"
                   >
-                    {isLoading ? "Starting..." : "🏠 Go to Home"}
+                    {isLoading ? "Starting..." : buttonTexts.home}
                   </button>
                   <button
                     onClick={() => startTrip("Work")}
                     disabled={isLoading}
                     className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 text-white font-semibold py-3 px-4 rounded-xl transition-colors"
                   >
-                    {isLoading ? "Starting..." : "💼 Go to Work"}
+                    {isLoading ? "Starting..." : buttonTexts.work}
                   </button>
                 </div>
               ) : (
@@ -232,7 +260,7 @@ export default function Dashboard() {
                     onClick={endTrip}
                     className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-xl transition-colors"
                   >
-                    🛑 End Trip
+                    End Trip
                   </button>
                 </div>
               )}
@@ -249,7 +277,7 @@ export default function Dashboard() {
 
             {/* Emergency Contacts */}
             <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-              <h2 className="text-lg font-bold text-gray-800 mb-4">🆘 Emergency Contacts</h2>
+              <h2 className="text-lg font-bold text-gray-800 mb-4">Emergency Contacts</h2>
               
               <div className="space-y-3 mb-4">
                 {contacts.length === 0 ? (
@@ -265,7 +293,7 @@ export default function Dashboard() {
                         onClick={() => removeContact(index)}
                         className="text-red-500 hover:text-red-700"
                       >
-                        ✕
+                        X
                       </button>
                     </div>
                   ))
@@ -291,14 +319,14 @@ export default function Dashboard() {
                   onClick={addContact}
                   className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
                 >
-                  + Add Contact
+                  {buttonTexts.addContact}
                 </button>
               </div>
             </div>
 
             {/* Secret Emergency Button */}
             <div className="bg-red-50 rounded-2xl p-6 border border-red-100">
-              <h2 className="text-lg font-bold text-red-800 mb-2">🆘 Quick Emergency</h2>
+              <h2 className="text-lg font-bold text-red-800 mb-2">Quick Emergency</h2>
               <p className="text-sm text-red-600 mb-4">
                 Tap the button below or press <kbd className="bg-red-200 px-2 py-1 rounded">S</kbd> 5 times quickly
               </p>
@@ -306,7 +334,7 @@ export default function Dashboard() {
                 onClick={handleEmergency}
                 className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-4 rounded-xl transition-colors text-lg animate-pulse"
               >
-                🚨 SEND EMERGENCY ALERT
+                {buttonTexts.emergency}
               </button>
             </div>
           </div>
@@ -315,7 +343,7 @@ export default function Dashboard() {
           <div className="lg:col-span-2 space-y-6">
             {/* Map */}
             <div>
-              <h2 className="text-lg font-bold text-gray-800 mb-4">📍 Live Location</h2>
+              <h2 className="text-lg font-bold text-gray-800 mb-4">Live Location</h2>
               <DynamicMap 
                 route={trip?.route || []}
                 onLocationUpdate={setCurrentLocation}
@@ -324,7 +352,7 @@ export default function Dashboard() {
 
             {/* Safety Tips */}
             <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-6 text-white">
-              <h2 className="text-lg font-bold mb-3">💡 Safety Tips</h2>
+              <h2 className="text-lg font-bold mb-3">Safety Tips</h2>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-start gap-2">
                   <span>✓</span>
@@ -348,7 +376,7 @@ export default function Dashboard() {
             {/* Trip Status */}
             {trip && (
               <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-                <h2 className="text-lg font-bold text-gray-800 mb-4">📊 Trip Status</h2>
+                <h2 className="text-lg font-bold text-gray-800 mb-4">Trip Status</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-blue-50 rounded-xl p-4">
                     <p className="text-sm text-gray-600">Status</p>
@@ -378,7 +406,7 @@ export default function Dashboard() {
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 text-center">
             <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="text-5xl">🚨</span>
+              <span className="text-5xl">!</span>
             </div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">Emergency Alert Sent!</h2>
             <p className="text-gray-600 mb-6">

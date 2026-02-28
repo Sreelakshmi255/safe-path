@@ -2,12 +2,18 @@
 
 import { useEffect, useRef } from "react";
 
-export default function EmergencyListener({ triggerEmergency }) {
+type EmergencyListenerProps = {
+  triggerEmergency: () => void;
+};
+
+export default function EmergencyListener({
+  triggerEmergency,
+}: EmergencyListenerProps) {
 
   const pressCount = useRef(0);
 
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "s") {
         pressCount.current++;
 
@@ -15,17 +21,15 @@ export default function EmergencyListener({ triggerEmergency }) {
           triggerEmergency();
           pressCount.current = 0;
         }
-
-        setTimeout(() => {
-          pressCount.current = 0;
-        }, 3000);
       }
     };
 
-    window.addEventListener("keydown", handleKey);
+    window.addEventListener("keydown", handleKeyDown);
 
-    return () => window.removeEventListener("keydown", handleKey);
-  }, []);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [triggerEmergency]);
 
   return null;
 }
