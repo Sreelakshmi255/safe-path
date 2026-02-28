@@ -13,7 +13,7 @@ Member 2: Malavika Sajith -College of Engineering ,Vadakara
 
 🌐 Hosted Project Link
 
-🔗 https://your-deployed-link.com
+🔗 https://safe-path-exzr3crrb-sreelakshmis-projects-bb2756a8.vercel.app/
 
 📌 Project Description
 
